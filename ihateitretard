@@ -3118,56 +3118,7 @@ function Library:CreateWindow(...)
 
     local previousIndicator = nil
 
-    if menu.visualize_grenadeonui then
-        local grenadeIndicator = createIndicator('nades', 'rbxassetid://133396473793316', 'nades')
-        if previousIndicator then
-            grenadeIndicator.Position = UDim2.new(0, 555, 0, previousIndicator.Position.Y.Offset + 70)
-        end
-        previousIndicator = grenadeIndicator
-    end
-
-    if menu.visualize_rocketonui then
-        local rocketIndicator = createIndicator('rockets', 'rbxassetid://81277363251101', 'rockets')
-        if previousIndicator then
-            rocketIndicator.Position = UDim2.new(0, 555, 0, previousIndicator.Position.Y.Offset + 70)
-        end
-        previousIndicator = rocketIndicator
-                local teargasImage = rocketIndicator:FindFirstChildOfClass('ImageLabel')
-                if teargasImage then
-                    teargasImage.Size = UDim2.new(0, menu.teargas_image_size or 30, 0, menu.teargas_image_size or 30)
-                    teargasImage.Position = UDim2.new(0, menu.teargas_image_x or 9, 0, menu.teargas_image_y or 7)
-                end
-            end
-
     
-
-    if menu.visualize_flashbangonui then
-        local rocketIndicator = createIndicator('flashbang', 'rbxassetid://93288380875614', 'flashbang')
-        if previousIndicator then
-            rocketIndicator.Position = UDim2.new(0, 555, 0, previousIndicator.Position.Y.Offset + 70)
-        end
-        previousIndicator = rocketIndicator
-            local teargasImage = rocketIndicator:FindFirstChildOfClass('ImageLabel')
-            if teargasImage then
-                teargasImage.Size = UDim2.new(0, menu.teargas_image_size or 37, 0, menu.teargas_image_size or 37)
-                teargasImage.Position = UDim2.new(0, menu.teargas_image_x or 6, 0, menu.teargas_image_y or 6)
-            end
-        end
-
-    
-
-    if menu.visualize_teargasonui then
-        local rocketIndicator = createIndicator('teargas', 'rbxassetid://99741931926203', 'teargas')
-        if previousIndicator then
-            rocketIndicator.Position = UDim2.new(0, 555, 0, previousIndicator.Position.Y.Offset + 70)
-        end
-        previousIndicator = rocketIndicator
-        local teargasImage = rocketIndicator:FindFirstChildOfClass('ImageLabel')
-        if teargasImage then
-            teargasImage.Size = UDim2.new(0, menu.teargas_image_size or 37, 0, menu.teargas_image_size or 37)
-            teargasImage.Position = UDim2.new(0, menu.teargas_image_x or 6, 0, menu.teargas_image_y or 6)
-        end
-    end
 
 
     Library:Create('UIGradient', {
