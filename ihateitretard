@@ -3043,45 +3043,98 @@ function Library:CreateWindow(...)
         Parent = Inner;
     });
 
-    local function createSnowflake()
-        local Snowflake = Instance.new("Frame")
-        Snowflake.Size = UDim2.new(0, 2, 0, 2)
-        Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-        Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-        Snowflake.BorderSizePixel = 0
-        Snowflake.ZIndex = 10001 -- Change the ZIndex here
-        Snowflake.Parent = Inner
-    
-        local tweenService = game:GetService("TweenService")
-        local speed = Library.snowflake_range
-        local randomSpeed = speed + math.random() * (10 - speed) 
-        local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-        local goal
-        
-        if Library.snowflake_direction == "left" then
-            Snowflake.Position = UDim2.new(0, 0, math.random(), 0) 
-            goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
-        elseif Library.snowflake_direction == "down" then
-            Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) 
-            goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
-        end
-    
-        local tween = tweenService:Create(Snowflake, tweenInfo, goal)
-        tween:Play()
-    
-        tween.Completed:Connect(function()
-            Snowflake:Destroy()
-        end)
-    end
+    -- CoreGui.ScreenGui.Frame.DropShadowHolder
+    local DropShadowHolder = Instance.new("Frame", SmallerFrame);
+    DropShadowHolder.ZIndex = 0;
+    DropShadowHolder.BorderSizePixel = 0;
+    DropShadowHolder.Size = UDim2.new(1, 0, 1, 0);
+    DropShadowHolder.Name = "DropShadowHolder";
+    DropShadowHolder.BackgroundTransparency = 1;
 
-    task.spawn(function()
-        while true do
-            if Library.snowflakes_enable then
-                createSnowflake()
-            end
-            wait(0.1)
-        end
-    end)
+    -- CoreGui.ScreenGui.Frame.DropShadowHolder.DropShadow
+    local DropShadow = Instance.new("ImageLabel", DropShadowHolder);
+    DropShadow.ZIndex = 0;
+    DropShadow.BorderSizePixel = 0;
+    DropShadow.SliceCenter = Rect.new(49, 49, 450, 450);
+    DropShadow.ScaleType = Enum.ScaleType.Slice;
+    DropShadow.ImageTransparency = 0.5;
+    DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0);
+    DropShadow.AnchorPoint = Vector2.new(0.5, 0.5);
+    DropShadow.Image = "rbxassetid://6015897843";
+    DropShadow.Size = UDim2.new(1, 47, 1, 47);
+    DropShadow.BackgroundTransparency = 1;
+    DropShadow.Name = "DropShadow";
+    DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0);
+
+-- Snowflakes effect with Bezier curves
+local function createSnowflake()
+	local Snowflake = Instance.new("Frame")
+	Snowflake.Size = UDim2.new(0, 2, 0, 2)
+	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+	Snowflake.BorderSizePixel = 0
+	Snowflake.ZIndex = 40000 -- Change the ZIndex here
+	Snowflake.Parent = SmallerFrame
+
+	local tweenService = game:GetService("TweenService")
+	local speed = Library.snowflake_range
+	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+	local goal
+	
+	if Library.snowflake_direction == "left" then
+		Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
+		goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
+	elseif Library.snowflake_direction == "down" then
+		Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
+		goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
+	end
+
+	local tween = tweenService:Create(Snowflake, tweenInfo, goal)
+	tween:Play()
+
+	tween.Completed:Connect(function()
+		Snowflake:Destroy()
+	end)
+end
+
+local function createAnimatedSnowflake()
+	local Snowflake = Instance.new("Frame")
+	Snowflake.Size = UDim2.new(0, 2, 0, 2)
+	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+	Snowflake.BorderSizePixel = 0
+	Snowflake.ZIndex = 10001 -- Change the ZIndex here
+	Snowflake.Parent = SmallerFrame
+
+	local tweenService = game:GetService("TweenService")
+	local speed = Library.snowflake_range
+	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+
+	-- Random end position for more dynamic movement
+	local endPos = UDim2.new(math.random(), 0, 1, 0)
+
+	local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
+	tween:Play()
+
+	tween.Completed:Connect(function()
+		Snowflake:Destroy()
+	end)
+end
+
+task.spawn(function()
+	while true do
+		if Library.snowflakes_enable then
+			if Library.snowflakes_animate then
+				createAnimatedSnowflake()
+			else
+				createSnowflake()
+			end
+		end
+		wait(0.1)
+	end
+end)
 
     local function createIndicator(name, imageId, text)
         local IndicatorGUI = Library:Create('ScreenGui', {
@@ -3174,28 +3227,6 @@ function Library:CreateWindow(...)
     });
     
 
-    local DropShadowHolder = Instance.new("Frame", SmallerFrame);
-    DropShadowHolder.ZIndex = 0;
-    DropShadowHolder.BorderSizePixel = 0;
-    DropShadowHolder.Size = UDim2.new(1, 0, 1, 0);
-    DropShadowHolder.Name = "DropShadowHolder";
-    DropShadowHolder.BackgroundTransparency = 1;
-
-    local DropShadow = Instance.new("ImageLabel", DropShadowHolder);
-    DropShadow.ZIndex = 0;
-    DropShadow.BorderSizePixel = 0;
-    DropShadow.SliceCenter = Rect.new(49, 49, 450, 450);
-    DropShadow.ScaleType = Enum.ScaleType.Slice;
-    DropShadow.ImageTransparency = 0.5;
-    DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0);
-    DropShadow.AnchorPoint = Vector2.new(0.5, 0.5);
-    DropShadow.Image = "rbxassetid://6015897843";
-    DropShadow.Size = UDim2.new(1, 47, 1, 47);
-    DropShadow.BackgroundTransparency = 1;
-    DropShadow.Name = "DropShadow";
-    DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0);
-
-    
 
     Library:Create('UIGradient', {
         Color = ColorSequence.new({
@@ -3205,76 +3236,6 @@ function Library:CreateWindow(...)
         Rotation = 180;
         Parent = SmallerFrame;
     });
-
-	            -- Snowflakes effect with Bezier curves
-				local function createSnowflake()
-					local Snowflake = Instance.new("Frame")
-					Snowflake.Size = UDim2.new(0, 2, 0, 2)
-					Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-					Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-					Snowflake.BorderSizePixel = 0
-					Snowflake.ZIndex = 40000 -- Change the ZIndex here
-					Snowflake.Parent = SmallerFrame
-				
-					local tweenService = game:GetService("TweenService")
-					local speed = Library.snowflake_range
-					local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-					local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-					local goal
-					
-					if Library.snowflake_direction == "left" then
-						Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
-						goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
-					elseif Library.snowflake_direction == "down" then
-						Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
-						goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
-					end
-				
-					local tween = tweenService:Create(Snowflake, tweenInfo, goal)
-					tween:Play()
-				
-					tween.Completed:Connect(function()
-						Snowflake:Destroy()
-					end)
-				end
-	
-				local function createAnimatedSnowflake()
-					local Snowflake = Instance.new("Frame")
-					Snowflake.Size = UDim2.new(0, 2, 0, 2)
-					Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-					Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-					Snowflake.BorderSizePixel = 0
-					Snowflake.ZIndex = 10001 -- Change the ZIndex here
-					Snowflake.Parent = SmallerFrame
-	
-					local tweenService = game:GetService("TweenService")
-					local speed = Library.snowflake_range
-					local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-					local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-	
-					-- Random end position for more dynamic movement
-					local endPos = UDim2.new(math.random(), 0, 1, 0)
-	
-					local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
-					tween:Play()
-	
-					tween.Completed:Connect(function()
-						Snowflake:Destroy()
-					end)
-				end
-	
-				task.spawn(function()
-					while true do
-						if Library.snowflakes_enable then
-							if Library.snowflakes_animate then
-								createAnimatedSnowflake()
-							else
-								createSnowflake()
-							end
-						end
-						wait(0.1)
-					end
-				end)
 	
 
 
