@@ -3247,7 +3247,7 @@ end)
 
 
     local WindowLabel = Library:CreateLabel({ --menu title position
-        Position = UDim2.new(0, 516, 0, -7);
+        Position = UDim2.new(0, 512, 0, -7);
         Size = UDim2.new(0, 0, 0, 25);
         RichText = true,
         Text = Config.Title or '';
