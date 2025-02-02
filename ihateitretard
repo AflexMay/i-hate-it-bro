@@ -377,7 +377,15 @@ function Library:RemoveFromRegistry(Instance)
 end;
 
 function Library:UpdateColorsUsingRegistry()
+    -- TODO: Could have an 'active' list of objects
+    -- where the active list only contains Visible objects.
 
+    -- IMPL: Could setup .Changed events on the AddToRegistry function
+    -- that listens for the 'Visible' propert being changed.
+    -- Visible: true => Add to active list, and call UpdateColors function
+    -- Visible: false => Remove from active list.
+
+    -- The above would be especially efficient for a rainbow menu color or live color-changing.
 
     for Idx, Object in next, Library.Registry do
         for Property, ColorIdx in next, Object.Properties do
@@ -391,17 +399,18 @@ function Library:UpdateColorsUsingRegistry()
 end;
 
 function Library:GiveSignal(Signal)
+    -- Only used for signals not attached to library instances, as those should be cleaned up on object destruction by Roblox
     table.insert(Library.Signals, Signal)
 end
 
 function Library:Unload()
-
+    -- Unload all of the signals
     for Idx = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Idx)
         Connection:Disconnect()
     end
 
-
+     -- Call our unload callback, maybe to undo some hooks etc
     if Library.OnUnload then
         Library.OnUnload()
     end
@@ -426,7 +435,7 @@ do
 
     function Funcs:AddColorPicker(Idx, Info)
         local ToggleLabel = self.TextLabel;
-
+        -- local Container = self.Container;
 
         assert(Info.Default, 'AddColorPicker: Missing default value.');
 
@@ -448,13 +457,13 @@ do
 
         ColorPicker:SetHSVFromRGB(ColorPicker.Value);
 
-        local DisplayFrame = Library:Create('Frame', { 
+        local DisplayFrame = Library:Create('Frame', { --menu colorpicker size
             BackgroundColor3 = ColorPicker.Value;
             BorderColor3 = Library:GetDarkerColor(ColorPicker.Value);
             BorderMode = Enum.BorderMode.Inset;
             Size = UDim2.new(0, 38, 0, 12);
             ZIndex = 6;
-            BorderSizePixel = 2.5;
+            BorderSizePixel = 2.5; -- Increase the border thickness
  
             Parent = ToggleLabel;
         });
@@ -469,14 +478,14 @@ do
 
 
         -- Transparency image taken from https://github.com/matas3535/SplixPrivateDrawingLibrary/blob/main/Library.lua cus i'm lazy
-        local CheckerFrame = Library:Create('ImageLabel', {
+        --[[local CheckerFrame = Library:Create('ImageLabel', {
             BorderSizePixel = 0;
             Size = UDim2.new(0, 27, 0, 13);
             ZIndex = 5;
             Image = 'http://www.roblox.com/asset/?id=12977615774';
             Visible = not not Info.Transparency;
             Parent = DisplayFrame;
-        });
+        });]]
 
         -- 1/16/23
         -- Rewrote this to be placed inside the Library ScreenGui
@@ -686,7 +695,7 @@ do
             Position = UDim2.fromOffset(5, 5);
             TextXAlignment = Enum.TextXAlignment.Left;
             TextSize = 12;
-            Text = ColorPicker.Title,
+            Text = ColorPicker.Title,--Info.Default;
             TextWrapped = false;
             ZIndex = 16;
             Parent = PickerFrameInner;
@@ -1636,8 +1645,8 @@ do
             Parent = Container;
         });
 
-        local DividerInner = Library:Create('Frame', {
-            BackgroundColor3 = Library.MainColor;
+        local DividerInner = Library:Create('Frame', { --menu divider color
+            BackgroundColor3 = Library.AccentColorDark; --accentdarkco
             BorderColor3 = Library.OutlineColor;
             BorderMode = Enum.BorderMode.Inset;
             Size = UDim2.new(1, 0, 1, 0);
@@ -1645,12 +1654,21 @@ do
             Parent = DividerOuter;
         });
 
+        Library:Create('UIGradient', {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
+            });
+            Rotation = 180;
+            Parent = DividerInner;
+        });
+
         Library:AddToRegistry(DividerOuter, {
             BorderColor3 = 'Black';
         });
 
         Library:AddToRegistry(DividerInner, {
-            BackgroundColor3 = 'MainColor';
+            BackgroundColor3 = 'AccentColorDark';
             BorderColor3 = 'OutlineColor';
         });
 
@@ -1797,13 +1815,20 @@ do
             local reveal = Container.AbsoluteSize.X
 
             if not Box:IsFocused() or Box.TextBounds.X <= reveal - 2 * PADDING then
+                -- we aren't focused, or we fit so be normal
                 Box.Position = UDim2.new(0, PADDING, 0, 0)
             else
+                -- we are focused and don't fit, so adjust position
                 local cursor = Box.CursorPosition
                 if cursor ~= -1 then
+                    -- calculate pixel width of text from start to cursor
                     local subtext = string.sub(Box.Text, 1, cursor-1)
                     local width = TextService:GetTextSize(subtext, Box.TextSize, Box.Font, Vector2.new(math.huge, math.huge)).X
+
+                    -- check if we're inside the box with the cursor
                     local currentCursorPos = Box.Position.X.Offset + width
+
+                    -- adjust if necessary
                     if currentCursorPos < PADDING then
                         Box.Position = UDim2.fromOffset(PADDING-width, 0)
                     elseif currentCursorPos > reveal - PADDING - 1 then
@@ -2073,11 +2098,11 @@ do
 
         local DisplayLabel = Library:CreateLabel({
             Size = UDim2.new(1, 0, 1, 0);
-            Position = UDim2.new(0, 0, -1.3, 1);
-            AnchorPoint = Vector2.new(0, 0); 
+            Position = UDim2.new(0, 0, -1.3, 1); -- Align to the left
+            AnchorPoint = Vector2.new(0, 0); -- Anchor to the top-left corner
             TextSize = 12;
             Text = 'Infinite';
-            TextXAlignment = Enum.TextXAlignment.Right; 
+            TextXAlignment = Enum.TextXAlignment.Right; -- Align text to the left
             ZIndex = 9;
             Parent = SliderInner;
         });
@@ -2882,7 +2907,6 @@ end;
 
 function Library:Notify(Text, Time)
     local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
-
     YSize = YSize + 7
 
     local NotifyOuter = Library:Create('Frame', {
@@ -2891,6 +2915,7 @@ function Library:Notify(Text, Time)
         Size = UDim2.new(0, 0, 0, YSize);
         ClipsDescendants = true;
         ZIndex = 100;
+        BackgroundTransparency = 1; -- Start fully transparent
         Parent = Library.NotificationArea;
     });
 
@@ -2900,8 +2925,12 @@ function Library:Notify(Text, Time)
         BorderMode = Enum.BorderMode.Inset;
         Size = UDim2.new(1, 0, 1, 0);
         ZIndex = 101;
+        BackgroundTransparency = 1;
         Parent = NotifyOuter;
     });
+
+
+
 
     Library:AddToRegistry(NotifyInner, {
         BackgroundColor3 = 'MainColor';
@@ -2911,12 +2940,14 @@ function Library:Notify(Text, Time)
     local InnerFrame = Library:Create('Frame', {
         BackgroundColor3 = Color3.new(1, 1, 1);
         BorderSizePixel = 0;
-        
         Position = UDim2.new(0, 1, 0, 1);
         Size = UDim2.new(1, -2, 1, -2);
         ZIndex = 102;
+        BackgroundTransparency = 1;
         Parent = NotifyInner;
     });
+
+
 
     local Gradient = Library:Create('UIGradient', {
         Color = ColorSequence.new({
@@ -2943,34 +2974,61 @@ function Library:Notify(Text, Time)
         TextXAlignment = Enum.TextXAlignment.Left;
         TextSize = 12;
         ZIndex = 103;
+        TextTransparency = 1;
+        TextStrokeTransparency = 1;
         Parent = InnerFrame;
     });
 
     local LeftColor = Library:Create('Frame', {
         BackgroundColor3 = Library.AccentColor;
         BorderSizePixel = 0;
-        Position = UDim2.new(0, -1, 0, -1);
-        Size = UDim2.new(0, 3, 1, 2);
-        ZIndex = 104;
-        Parent = NotifyOuter;
+        Position = UDim2.new(0, 0, 0, 0);
+        Size = UDim2.new(1, 0, 1, 0);
+        ZIndex = 102;
+        BackgroundTransparency = 1;
+        Parent = NotifyInner;
+    });
+    
+    Library:Create('UIGradient', {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
+        });
+        Rotation = 180;
+        Parent = LeftColor;
     });
 
     Library:AddToRegistry(LeftColor, {
         BackgroundColor3 = 'AccentColor';
     }, true);
 
-    pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+    local tweenService = game:GetService("TweenService");
+    local function fadeIn()
+        tweenService:Create(NotifyOuter, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play();
+        tweenService:Create(NotifyInner, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play();
+        tweenService:Create(InnerFrame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play();
+        tweenService:Create(NotifyLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0, TextStrokeTransparency = 0}):Play();
+        tweenService:Create(LeftColor, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play();
+    end
+
+    pcall(function()
+        NotifyOuter:TweenSize(UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+        fadeIn();
+    end);
 
     task.spawn(function()
         wait(Time or 5);
-
-        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
-
+        pcall(function()
+            tweenService:Create(LeftColor, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 1, 0)}):Play();
+            wait(0.4);
+            NotifyOuter:TweenSize(UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
+        end);
         wait(0.4);
-
         NotifyOuter:Destroy();
     end);
+    
 end;
+
 
 function Library:CreateWindow(...)
     local Arguments = { ... }
@@ -3013,7 +3071,7 @@ function Library:CreateWindow(...)
 
 
 
-    Library:MakeDraggable(Outer, 15); 
+    Library:MakeDraggable(Outer, 15); -- Adjust the cutoff value as needed
 
     local Inner = Library:Create('Frame', { --menu Title Frame
         BackgroundColor3 = Library.MainColor;
@@ -3043,6 +3101,8 @@ function Library:CreateWindow(...)
         Parent = Inner;
     });
 
+    
+
     -- CoreGui.ScreenGui.Frame.DropShadowHolder
     local DropShadowHolder = Instance.new("Frame", SmallerFrame);
     DropShadowHolder.ZIndex = 0;
@@ -3066,156 +3126,7 @@ function Library:CreateWindow(...)
     DropShadow.Name = "DropShadow";
     DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0);
 
--- Snowflakes effect with Bezier curves
-local function createSnowflake()
-	local Snowflake = Instance.new("Frame")
-	Snowflake.Size = UDim2.new(0, 2, 0, 2)
-	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-	Snowflake.BorderSizePixel = 0
-	Snowflake.ZIndex = 40000 -- Change the ZIndex here
-	Snowflake.Parent = SmallerFrame
-
-	local tweenService = game:GetService("TweenService")
-	local speed = Library.snowflake_range
-	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-	local goal
-	
-	if Library.snowflake_direction == "left" then
-		Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
-		goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
-	elseif Library.snowflake_direction == "down" then
-		Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
-		goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
-	end
-
-	local tween = tweenService:Create(Snowflake, tweenInfo, goal)
-	tween:Play()
-
-	tween.Completed:Connect(function()
-		Snowflake:Destroy()
-	end)
-end
-
-local function createAnimatedSnowflake()
-	local Snowflake = Instance.new("Frame")
-	Snowflake.Size = UDim2.new(0, 2, 0, 2)
-	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-	Snowflake.BorderSizePixel = 0
-	Snowflake.ZIndex = 10001 -- Change the ZIndex here
-	Snowflake.Parent = SmallerFrame
-
-	local tweenService = game:GetService("TweenService")
-	local speed = Library.snowflake_range
-	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-
-	-- Random end position for more dynamic movement
-	local endPos = UDim2.new(math.random(), 0, 1, 0)
-
-	local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
-	tween:Play()
-
-	tween.Completed:Connect(function()
-		Snowflake:Destroy()
-	end)
-end
-
-task.spawn(function()
-	while true do
-		if Library.snowflakes_enable then
-			if Library.snowflakes_animate then
-				createAnimatedSnowflake()
-			else
-				createSnowflake()
-			end
-		end
-		wait(0.1)
-	end
-end)
-
-    local function createIndicator(name, imageId, text)
-        local IndicatorGUI = Library:Create('ScreenGui', {
-            Name = name .. ' indicator',
-            Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-        })
-
-        local DistanceTextLabel = Library:Create('Frame', {
-            Name = name .. 'DistanceTextLabel',
-            BorderSizePixel = 0,
-            BackgroundColor3 = Library.AccentColor,
-            AnchorPoint = Vector2.new(0, 0),
-            Size = UDim2.new(0, 50, 0, 50),
-            Position = UDim2.new(0, 555, 0, 0),
-            BorderColor3 = Color3.fromRGB(0, 0, 0),
-            Parent = SmallerFrame
-        })
-
-        Library:AddToRegistry(DistanceTextLabel, {
-            BackgroundColor3 = 'MainColor'; 
-        });
-
-        Library:Create('UICorner', {
-            CornerRadius = UDim.new(0, 100),
-            Parent = DistanceTextLabel
-        })
-
-        Library:Create('ImageLabel', {
-            BorderSizePixel = 0,
-            BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-            Image = imageId,
-            Size = UDim2.new(0, 30, 0, 30),
-            BorderColor3 = Color3.fromRGB(0, 0, 0),
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 9, 0, 10),
-            Parent = DistanceTextLabel
-        })
-
-        Library:Create('UIStroke', {
-            Thickness = 0.8,
-            Color = Color3.fromRGB(110, 110, 110),
-            Parent = DistanceTextLabel
-        })
-
-        Library:Create('Frame', {
-            Name = 'DropShadowHolder',
-            ZIndex = 0,
-            BorderSizePixel = 0,
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Parent = DistanceTextLabel
-        })
-
-        Library:Create('TextLabel', {
-            TextStrokeTransparency = 0,
-            BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 12,
-            FontFace = font,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 50, 0, 50),
-            BorderColor3 = Color3.fromRGB(0, 0, 0),
-            Text = text,
-            Position = UDim2.new(0, 0, 0, 35),
-            Parent = DistanceTextLabel
-        })
-
-        return DistanceTextLabel
-    end
-
-
-
-    local padding = Library:Create('UIPadding', {
-        PaddingTop = UDim.new(0, -1),
-        Parent = SmallerFrame
-    })
-
-    local previousIndicator = nil
-
     
-
 
     Library:Create('UIGradient', {
         Color = ColorSequence.new({
@@ -3225,34 +3136,89 @@ end)
         Rotation = 180;
         Parent = SmallerFrame;
     });
-    
 
+            -- Snowflakes effect with Bezier curves
+            local function createSnowflake()
+                local Snowflake = Instance.new("Frame")
+                Snowflake.Size = UDim2.new(0, 2, 0, 2)
+                Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+                Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+                Snowflake.BorderSizePixel = 0
+                Snowflake.ZIndex = 40000 -- Change the ZIndex here
+                Snowflake.Parent = SmallerFrame
+            
+                local tweenService = game:GetService("TweenService")
+                local speed = menu.snowflake_range
+                local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+                local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+                local goal
+                
+                if menu.snowflake_direction == "left" then
+                    Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
+                    goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
+                elseif menu.snowflake_direction == "down" then
+                    Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
+                    goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
+                end
+            
+                local tween = tweenService:Create(Snowflake, tweenInfo, goal)
+                tween:Play()
+            
+                tween.Completed:Connect(function()
+                    Snowflake:Destroy()
+                end)
+            end
 
-    Library:Create('UIGradient', {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-        });
-        Rotation = 180;
-        Parent = SmallerFrame;
-    });
-	
+            local function createAnimatedSnowflake()
+                local Snowflake = Instance.new("Frame")
+                Snowflake.Size = UDim2.new(0, 2, 0, 2)
+                Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+                Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+                Snowflake.BorderSizePixel = 0
+                Snowflake.ZIndex = 10001 -- Change the ZIndex here
+                Snowflake.Parent = SmallerFrame
 
+                local tweenService = game:GetService("TweenService")
+                local speed = menu.snowflake_range
+                local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+                local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
 
+                -- Random end position for more dynamic movement
+                local endPos = UDim2.new(math.random(), 0, 1, 0)
+
+                local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
+                tween:Play()
+
+                tween.Completed:Connect(function()
+                    Snowflake:Destroy()
+                end)
+            end
+
+            task.spawn(function()
+                while true do
+                    if menu.snowflakes_enable then
+                        if menu.snowflakes_animate then
+                            createAnimatedSnowflake()
+                        else
+                            createSnowflake()
+                        end
+                    end
+                    wait(0.1)
+                end
+            end)
 
 
     Library:AddToRegistry(SmallerFrame, {
         BackgroundColor3 = 'AccentColor';
     });
 
-
-    local WindowLabel = Library:CreateLabel({ --menu title position
-        Position = UDim2.new(0, 512, 0, -7);
+    local WindowLabel = Library:CreateLabel({
+        Position = UDim2.new(0, 523, 0, -7);
         Size = UDim2.new(0, 0, 0, 25);
         RichText = true,
         Text = Config.Title or '';
-        TextTransparency = 0; 
-        TextStrokeTransparency = 0; 
+        TextTransparency = 0; -- Initial transparency
+        TextStrokeTransparency = 0; -- Initial stroke transparency
         TextXAlignment = Enum.TextXAlignment.Left;
         ZIndex = 200;
         Parent = Inner;
@@ -3277,7 +3243,7 @@ end)
 
     local MainSectionInner = Library:Create('Frame', {
         BackgroundColor3 = Library.BackgroundColor;
-        BorderColor3 = Color3.fromRGB(20, 20, 20); 
+        BorderColor3 = Color3.fromRGB(20, 20, 20); --menu border color
         BackgroundTransparency = 1;
         BorderMode = Enum.BorderMode.Inset;
         Position = UDim2.new(0, 0, 0, -40);
@@ -3286,6 +3252,7 @@ end)
         Parent = MainSectionOuter;
     });
     
+
     
     Library:AddToRegistry(MainSectionInner, {
         BackgroundColor3 = 'BackgroundColor';
@@ -3299,7 +3266,7 @@ end)
         Parent = MainSectionInner;
     });
 
-    
+
 
     local TabListLayout = Library:Create('UIListLayout', {
         Padding = UDim.new(0, Config.TabPadding);
@@ -3308,7 +3275,7 @@ end)
         Parent = TabArea;
     });
 
-    local TabContainer = Library:Create('Frame', { --menu tab size
+    local TabContainer = Library:Create('Frame', {
         BackgroundColor3 = Library.MainColor;
         BorderColor3 = Library.OutlineColor;
         Position = UDim2.new(0, 8, 0, 30);
@@ -3316,14 +3283,12 @@ end)
         ZIndex = 2;
         Parent = MainSectionInner;
     });
-    
 
-    
+
     Library:AddToRegistry(TabContainer, {
         BackgroundColor3 = 'MainColor';
         BorderColor3 = 'OutlineColor';
     });
-
 
     function Window:SetWindowTitle(Title)
         WindowLabel.Text = Title;
@@ -3335,7 +3300,7 @@ end)
             Tabboxes = {};
         };
 
-        local TabButtonWidth = Library:GetTextBounds(Name, Library.Font, 25); --menu tab size
+        local TabButtonWidth = Library:GetTextBounds(Name, Library.Font, 16);
 
         local TabButton = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
@@ -3345,25 +3310,10 @@ end)
             Parent = TabArea;
         });
 
-        Library:Create('UIGradient', {
-            Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-            });
-            Rotation = 90;
-            Parent = TabButton;
-        });
-    
-
-
         Library:AddToRegistry(TabButton, {
             BackgroundColor3 = 'BackgroundColor';
             BorderColor3 = 'OutlineColor';
         });
-
-
-    
-
 
         local TabButtonLabel = Library:CreateLabel({
             Position = UDim2.new(0, 0, 0, 0);
@@ -3410,6 +3360,8 @@ end)
             Parent = TabFrame;
         });
 
+
+        
         local RightSide = Library:Create('ScrollingFrame', {
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
@@ -3499,10 +3451,10 @@ end)
                 BackgroundColor3 = 'BackgroundColor';
             });
 
-            local Highlight = Library:Create('Frame', {
+            local Highlight = Library:Create('Frame', { --menu section accent
                 BackgroundColor3 = Library.AccentColor;
                 BorderSizePixel = 0;
-                Size = UDim2.new(1, 0, 0, 2);
+                Size = UDim2.new(1, 0, 0, 12);
                 ZIndex = 5;
                 Parent = BoxInner;
             });
@@ -3511,9 +3463,21 @@ end)
                 BackgroundColor3 = 'AccentColor';
             });
 
-            local GroupboxLabel = Library:CreateLabel({
+
+            Library:Create('UIGradient', {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
+                });
+                Rotation = 180;
+                Parent = Highlight;
+            });
+
+
+            
+            local GroupboxLabel = Library:CreateLabel({ --menu text section position
                 Size = UDim2.new(1, 0, 0, 18);
-                Position = UDim2.new(0, 4, 0, 2);
+                Position = UDim2.new(0, 4, 0, -2);
                 TextSize = 12;
                 Text = Info.Name;
                 TextXAlignment = Enum.TextXAlignment.Left;
@@ -3523,11 +3487,13 @@ end)
 
             local Container = Library:Create('Frame', {
                 BackgroundTransparency = 1;
-                Position = UDim2.new(0, 4, 0, 20);
+                Position = UDim2.new(0, 4, 0, 15);
                 Size = UDim2.new(1, -4, 1, -20);
                 ZIndex = 1;
                 Parent = BoxInner;
             });
+
+
 
             Library:Create('UIListLayout', {
                 FillDirection = Enum.FillDirection.Vertical;
@@ -3544,8 +3510,10 @@ end)
                     end;
                 end;
 
-                BoxOuter.Size = UDim2.new(1, 0, 0, 20 + Size + 2 + 2);
+                BoxOuter.Size = UDim2.new(1, 0, 0, 15 + Size + 2 + 2);
             end;
+
+
 
             Groupbox.Container = Container;
             setmetatable(Groupbox, BaseGroupbox);
@@ -3744,6 +3712,7 @@ end)
                 Tab:AddBlank(3);
                 Tab:Resize();
 
+                -- Show first tab (number is 2 cus of the UIListLayout that also sits in that instance)
                 if #TabboxButtons:GetChildren() == 2 then
                     Tab:Show();
                 end;
@@ -3770,7 +3739,7 @@ end)
             end;
         end);
 
-
+        -- This was the first tab added, so we show it by default.
         if #TabContainer:GetChildren() == 1 then
             Tab:ShowTab();
         end;
@@ -3916,15 +3885,6 @@ end;
 
 Players.PlayerAdded:Connect(OnPlayerChange);
 Players.PlayerRemoving:Connect(OnPlayerChange);
-
-Library:Create('UIGradient', {
-    Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-    });
-    Rotation = 90;
-    Parent = TabButton;
-});
 
 getgenv().Library = Library
 
