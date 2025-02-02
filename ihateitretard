@@ -3138,74 +3138,74 @@ function Library:CreateWindow(...)
     });
 
             -- Snowflakes effect with Bezier curves
-            local function createSnowflake()
-                local Snowflake = Instance.new("Frame")
-                Snowflake.Size = UDim2.new(0, 2, 0, 2)
-                Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-                Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-                Snowflake.BorderSizePixel = 0
-                Snowflake.ZIndex = 40000 -- Change the ZIndex here
-                Snowflake.Parent = SmallerFrame
-            
-                local tweenService = game:GetService("TweenService")
-                local speed = menu.snowflake_range
-                local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-                local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-                local goal
-                
-                if menu.snowflake_direction == "left" then
-                    Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
-                    goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
-                elseif menu.snowflake_direction == "down" then
-                    Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
-                    goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
-                end
-            
-                local tween = tweenService:Create(Snowflake, tweenInfo, goal)
-                tween:Play()
-            
-                tween.Completed:Connect(function()
-                    Snowflake:Destroy()
-                end)
-            end
+local function createSnowflake()
+	local Snowflake = Instance.new("Frame")
+	Snowflake.Size = UDim2.new(0, 2, 0, 2)
+	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+	Snowflake.BorderSizePixel = 0
+	Snowflake.ZIndex = 40000 -- Change the ZIndex here
+	Snowflake.Parent = SmallerFrame
 
-            local function createAnimatedSnowflake()
-                local Snowflake = Instance.new("Frame")
-                Snowflake.Size = UDim2.new(0, 2, 0, 2)
-                Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
-                Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
-                Snowflake.BorderSizePixel = 0
-                Snowflake.ZIndex = 10001 -- Change the ZIndex here
-                Snowflake.Parent = SmallerFrame
+	local tweenService = game:GetService("TweenService")
+	local speed = Library.snowflake_range
+	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+	local goal
+	
+	if Library.snowflake_direction == "left" then
+		Snowflake.Position = UDim2.new(0, 0, math.random(), 0) -- Start from a random vertical position
+		goal = {Position = UDim2.new(1, 0, Snowflake.Position.Y.Scale, 0), BackgroundTransparency = 1}
+	elseif Library.snowflake_direction == "down" then
+		Snowflake.Position = UDim2.new(math.random(), 0, 0, 0) -- Start from a random horizontal position
+		goal = {Position = UDim2.new(Snowflake.Position.X.Scale, 0, 1, 0), BackgroundTransparency = 1}
+	end
 
-                local tweenService = game:GetService("TweenService")
-                local speed = menu.snowflake_range
-                local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
-                local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+	local tween = tweenService:Create(Snowflake, tweenInfo, goal)
+	tween:Play()
 
-                -- Random end position for more dynamic movement
-                local endPos = UDim2.new(math.random(), 0, 1, 0)
+	tween.Completed:Connect(function()
+		Snowflake:Destroy()
+	end)
+end
 
-                local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
-                tween:Play()
+local function createAnimatedSnowflake()
+	local Snowflake = Instance.new("Frame")
+	Snowflake.Size = UDim2.new(0, 2, 0, 2)
+	Snowflake.Position = UDim2.new(math.random(), 0, 0, 0)
+	Snowflake.BackgroundColor3 = Color3.new(1, 1, 1)
+	Snowflake.BorderSizePixel = 0
+	Snowflake.ZIndex = 10001 -- Change the ZIndex here
+	Snowflake.Parent = SmallerFrame
 
-                tween.Completed:Connect(function()
-                    Snowflake:Destroy()
-                end)
-            end
+	local tweenService = game:GetService("TweenService")
+	local speed = Library.snowflake_range
+	local randomSpeed = speed + math.random() * (5 - speed) -- Randomize speed based on the current speed setting
+	local tweenInfo = TweenInfo.new(randomSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
 
-            task.spawn(function()
-                while true do
-                    if menu.snowflakes_enable then
-                        if menu.snowflakes_animate then
-                            createAnimatedSnowflake()
-                        else
-                            createSnowflake()
-                        end
-                    end
-                    wait(0.1)
-                end
-            end)
+	-- Random end position for more dynamic movement
+	local endPos = UDim2.new(math.random(), 0, 1, 0)
+
+	local tween = tweenService:Create(Snowflake, tweenInfo, {Position = endPos, BackgroundTransparency = 1})
+	tween:Play()
+
+	tween.Completed:Connect(function()
+		Snowflake:Destroy()
+	end)
+end
+
+task.spawn(function()
+	while true do
+		if Library.snowflakes_enable then
+			if Library.snowflakes_animate then
+				createAnimatedSnowflake()
+			else
+				createSnowflake()
+			end
+		end
+		wait(0.1)
+	end
+end)
 
 
     Library:AddToRegistry(SmallerFrame, {
